@@ -1,7 +1,7 @@
 # PorfolioMS
 This is an collection of a few of the examples of coding projects that I can share publicly.
 GENERAL:
-   1 - All files without an extensiona are .py codes.
+   1 - All files without an extension are .py codes.
    2 - All .py codes are complete in one large file.
    3 - To run/test, do follow instructions and download required reference files.
    4 - Each is an example of different skills acquired but do not display the full potential of all the          work that has been achieved throughout these last few years. 
