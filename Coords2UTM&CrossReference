@@ -1,0 +1,78 @@
+#DATA FRAMES ------------------------------------------------------------------------------------------------------------------------------------------
+cwd = os.path.abspath("")
+files = os.listdir(cwd)
+
+files = os.listdir(cwd)
+df = pd.DataFrame()
+df2 = pd.DataFrame()
+
+#COORDINATES TO UTM CONVERSION ------------------------------------------------------------------------------------------------------------------------------------------
+for file in files:
+    if file.endswith('WGS84 standard.xlsx'):
+        df = df.append(pd.read_excel(file), ignore_index=True)
+        for idx in df.index:
+            VARIABLE1 = (df['Lat'].iloc[idx])
+            VARIABLE2 = (df['Long'].iloc[idx])
+            VARIABLE3 = (df['Edificio'].iloc[idx])
+            coords2 = utm.from_latlon(VARIABLE1,VARIABLE2, 17, 'U')
+            df2=df2.append(pd.DataFrame({'coords2':[coords2],'Edificio':[VARIABLE3]}))
+
+#DATA FRAME CLEAN UP ---------------------------------------------------------------------------------
+df2['cleancoords'] = df2['coords2'].astype(str)
+df2['cleancoords'] = df2['cleancoords'].str.replace('(','')
+df2['cleancoords'] = df2['cleancoords'].str.replace(')','')
+df2['cleancoords'] = df2['cleancoords'].str.replace(", 17, 'U'",'')
+df2[['UTM_ESTE','UTM_NORTE']] = df2.cleancoords.str.split(',', expand = True)
+del df2['cleancoords']
+del df2['coords2']
+
+#DATA FRAME REORDER AND EXPORT -----------------------------------------------------------------------
+df2 = df2.reindex(columns=['UTM_ESTE', 'UTM_NORTE', 'Edificio'])
+df2.to_excel('1.UTM.xlsx',index=False)
+
+#COORDINATES CROSS REFERENCE ----------------------------------------------------------------------------------------------------------------------------------------------
+
+#IMPORT GEOJSON -----------------------------------------------------------------------
+with open('Panama_Corregimientos_Boundaries_2022.geojson') as f:
+    js = json.load(f)
+
+#DATA FRAME  --------------------------------------------------------------------------
+df3 = pd.DataFrame()
+
+for file in files:
+    if file.endswith('WGS84 standard.xlsx'):
+        df3 = df3.append(pd.read_excel(file), ignore_index=True)
+        for idx in df3.index:
+            VARIABLE1 = (df3['Long'].iloc[idx])
+            VARIABLE2 = (df3['Lat'].iloc[idx])
+            VARIABLE3 = (df3['Edificio'].iloc[idx])
+            point = Point(VARIABLE1,VARIABLE2)
+
+#CHECKING EACH POLYGON TO VERIFY IF IT CONTAINS THE POINT --------------------------------
+            for feature in js['features']:
+                polygon = shape(feature['geometry'])
+                BARRIO = feature['properties']
+                if polygon.contains(point):
+                    print ('Found containing polygon:', feature['properties'], VARIABLE3)
+                    df3=df3.append(pd.DataFrame({'Corregimiento':[BARRIO],'Edificio':[VARIABLE3]}))
+
+#DATA FRAME CLEAN UP ---------------------------------------------------------------------------------
+df3['Corregimiento'] = df3['Corregimiento'].astype(str)
+df3['Corregimiento'] = df3['Corregimiento'].str.replace("', 'Distrito': 'Panamá', 'Provincia': 'Panamá', 'COD_PROV': '08', 'COD_DIST': '08', 'COD_CORR': '09'",'')
+df3['Corregimiento'] = df3['Corregimiento'].str.replace("', 'Area_SQKM': 6.655559453216951, 'GlobalID': '{E5D95080-B6BC-4EBB-BD53-07750E0A423D}', 'SHAPE_Length': 0.1351744598585325, 'SHAPE_Area': 0.0005472509007302632}",'')
+df3['Corregimiento'] = df3['Corregimiento'].str.replace("{'OBJECTID': 612, 'Corregimiento': '",'')
+df3['Corregimiento'] = df3['Corregimiento'].str.replace("'",'')
+df3[['Corregimiento','ID']] = df3.Corregimiento.str.split(',', expand = True)
+
+#DATA FRAME REORDER AND EXPORT -----------------------------------------------------------------------
+df3['ID'] = df3['ID'].str.replace(" ID_CORR: ",'')
+df3 = df3.reindex(columns=['Edificio','Corregimiento','ID'])
+df3['ID'].replace('', np.nan, inplace=True)
+df3.dropna(subset=['ID'], inplace=True)
+
+#EXPORT RESULTS ----------------------------------------------------------------------------
+df3.to_excel('2.Locations.xlsx',index=False)
+
+#EXPORT RESULTS -------------------------------------------------------------------------------------------------------------------------------------------
+RESULTS = pd.concat([df2, df3], axis=1)
+RESULTS.to_excel('3.RESULTS.xlsx',index=False)
