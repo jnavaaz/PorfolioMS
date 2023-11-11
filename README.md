@@ -1,5 +1,9 @@
 # PorfolioMS
-This is an collection of a few of the examples of coding projects that I can share publicly.
+- This is an collection of a few of the examples of coding projects that I can share publicly.
+- This GitHub profile and codes were only created for the sole purpose of applying. 
+- If there is anything else or more content that would be ideal for the application process, it could be added as well to this space.
+- NOTE: All of these skills are self-taught.
+  
 GENERAL:
    1 - All files without an extension are .py codes.
    2 - All .py codes are complete in one large file.
