@@ -1,0 +1,106 @@
+
+#MODULES ------------------------------------------------------------------------------------------------------------------------------------------
+import smtplib
+import time
+import pandas as pd
+import os
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
+
+#REFERENCES--------------------------------------------------------------------------------------------------------------------------------------
+path_to_pdf1= r'/Users/jimena/mu_code/MS - PORTFOLIO/Automation/LEY 406.pdf'
+path_to_pdf2= r'/Users/jimena/mu_code/MS - PORTFOLIO/Automation/NatureConservatory2009.pdf'
+
+cwd = os.path.abspath("")
+files = os.listdir(cwd)
+
+files = os.listdir(cwd)
+df = pd.DataFrame()
+
+for file in files:
+    if file.endswith('.xlsx'):
+        df = df.append(pd.read_excel(file), ignore_index=True)
+        for idx in df.index:
+            VARIABLE1 = (df['NOMBRE'].iloc[idx])
+            VARIABLE2 = (df['SROSRA'].iloc[idx])
+            VARIABLE3 = (df['SROSRA2'].iloc[idx])
+            VARIABLE4 = (df['CORREO'].iloc[idx])
+
+#CREDENTIALS --------------------------------------------------------------------------------------------------------------------------------------
+            ORG_EMAIL   = '@indesa.com.pa'
+            FROM_EMAIL  = 'jnavarro' + ORG_EMAIL
+            FROM_PWD    = 'Navarro2k19'
+            SMTP_SERVER = 'imap.gmail.com'
+            strFrom = FROM_EMAIL
+            strTo = VARIABLE4
+            sender = FROM_EMAIL
+            password = FROM_PWD
+
+#EMAIL SCRIPT --------------------------------------------------------------------------------------------------------------------------------------
+            msgRoot = MIMEMultipart('mixed')
+            msgRoot['Subject'] = 'DUMMY AUTOMATION EMAIL EXAMPLE'
+            msgRoot['From'] = strFrom
+            msgRoot['To'] = strTo
+            msgRoot.preamble = 'This is a multi-part message in MIME format.'
+
+            msgAlternative = MIMEMultipart('mixed')
+            msgRoot.attach(msgAlternative)
+
+            msgText = MIMEText('<br><img src="cid:image1"><br>' + "<br> Estimad" + VARIABLE2 + " " +VARIABLE3 +" " + VARIABLE1 + ":<br> \
+" +"<br>Hope this email finds you well <br> \
+<br>This email dummy is an example of what could be sent and used to comunicate automatically to a client.<br>\
+<br> \
+We would love to hear about your thoughts on the mining topic in Panama. <br> \
+<br> \
+<br> \
+If there is anything else you would like to know about <b>mineria en Panamá</b> do let us know. <br> \
+<br> \
+Muy atentamente,\
+" +'<br> <br> <b>Jay Perez</b> | Investigadora | <b> EMPRESA </b> | Panamá, Rep. de Panamá<br>' +
+ "oficina +507 100-0000 | celular +507 0000-0000 | "+ u'<a href="https://www.inec.gob.pa/"> EJEMPLO DE PAGINA WEB www.inec.gob.pa/</a>\
+ '+ '<br><img src="cid:image2"><br>'+'<br><img src="cid:image3"><br>'+"<br>", 'html')
+            msgAlternative.attach(msgText)
+
+# HEADER IMAGE
+            fp = open('AZUL.jpg', 'rb')
+            msgImage = MIMEImage(fp.read())
+            fp.close()
+            msgImage.add_header('Content-ID', '<image1>')
+            msgRoot.attach(msgImage)
+
+# IMAGE
+            fp = open('INSTAGRAM.jpg', 'rb')
+            msgImage = MIMEImage(fp.read())
+            fp.close()
+            msgImage.add_header('Content-ID', '<image2>')
+            msgRoot.attach(msgImage)
+
+# IMAGE
+            fp = open('TWITTER.jpg', 'rb')
+            msgImage = MIMEImage(fp.read())
+            fp.close()
+            msgImage.add_header('Content-ID', '<image3>')
+            msgRoot.attach(msgImage)
+
+
+# Attach PDF - Formulario de Inscripción Foro Empresarial Indesa
+            with open(path_to_pdf1, "rb") as f:
+                attach = MIMEApplication(f.read(),_subtype="pdf")
+            attach.add_header('Content-Disposition','attachment',filename="2023 - LEY 406.pdf")
+            msgRoot.attach(attach)
+
+# Attach PDF - Informe de Perspectivas Económicas indesa - Julio 2023
+            with open(path_to_pdf2, "rb") as f:
+                attach = MIMEApplication(f.read(),_subtype="pdf")
+            attach.add_header('Content-Disposition','attachment',filename="2009 - NatureConservatory2009.pdf")
+            msgRoot.attach(attach)
+
+#SEND
+            smtp = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+            smtp.login(sender, password)
+            time.sleep(0)
+            smtp.sendmail(strFrom, strTo, msgRoot.as_string())
+            smtp.quit()
+
